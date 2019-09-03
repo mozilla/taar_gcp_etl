@@ -1,0 +1,16 @@
+version: "2"
+services:
+  taar_amodump:
+    environment:
+      - PYTHONPATH=/app
+
+      # Pickup the AWS secret and access key from host env
+      - AWS_SECRET_ACCESS_KEY
+      - AWS_ACCESS_KEY_ID
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    command:
+      "amodump"

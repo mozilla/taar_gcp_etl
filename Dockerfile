@@ -1,10 +1,10 @@
-FROM python:3.6.8-stretch
+FROM python:2.7-stretch
 ENV PYTHONDONTWRITEBYTECODE 1
 
 MAINTAINER Victor Ng <vng@mozilla.com>
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends build-essential gettext curl  && \
+    apt-get install -y --no-install-recommends build-essential gettext curl libsnappy-dev && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

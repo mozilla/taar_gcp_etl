@@ -5,4 +5,4 @@ all:
 	docker-compose build 
 
 shell:
-	docker-compose run web bash 
+	docker-compose run taar_amodump bash 

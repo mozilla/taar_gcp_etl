@@ -82,11 +82,11 @@ else
     cd python_mozetl
 fi
 
-pip install .
+pip install . --user
 python setup.py bdist_egg
 
 if [[ "${MOZETL_SUBMISSION_METHOD}" = "spark" ]]; then
-    spark-submit --master ${MOZETL_SPARK_MASTER} \
+    /app/.local/bin/spark-submit --master ${MOZETL_SPARK_MASTER} \
                  --deploy-mode client \
                  --py-files dist/*.egg \
                  ${workdir}/runner.py ${MOZETL_ARGS}

@@ -20,10 +20,12 @@ COPY . /app
 
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Running the TAAR job requires setting up AWS S3 credentials as well
+# as a rundate for the job itself.
+
+ENV AWS_ACCESS_KEY_ID=""
+ENV AWS_SECRET_ACCESS_KEY=""
+ENV AWS_DEFAULT_REGION=""
 ENV PROC_DATE=""
 
-#ENTRYPOINT /usr/bin/python -m taar_etl.taar_amodump --date=${PROC_DATE}
-
-
-# bin/run supports web|web-dev|test options
-CMD ["amodump"]
+ENTRYPOINT /usr/local/bin/python -m taar_etl.taar_amodump --date=${PROC_DATE}

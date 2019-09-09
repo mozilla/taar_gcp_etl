@@ -287,15 +287,15 @@ def marshal(value, name, type_def):
 @click.option("--s3-bucket", default=AMO_DUMP_BUCKET)
 def main(date, workers, s3_prefix, s3_bucket):
 
-    if not config("AWS_ACCESS_KEY_ID", None):
+    if config("AWS_ACCESS_KEY_ID", "") == "":
         logger.error("Can't find AWS access key ID.")
         return
 
-    if not config("AWS_SECRET_ACCESS_KEY", None):
+    if config("AWS_SECRET_ACCESS_KEY", "") == "":
         logger.error("Can't find AWS secret key.")
         return
 
-    if not config("AWS_DEFAULT_REGION", None):
+    if config("AWS_DEFAULT_REGION", "") == "":
         logger.error("Can't find AWS default region.")
         return
 

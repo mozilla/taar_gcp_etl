@@ -117,3 +117,4 @@ version.json
 
 # local virtual_env
 virtual_env
+.local

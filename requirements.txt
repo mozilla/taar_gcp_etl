@@ -1,0 +1,16 @@
+boto3==1.9.224
+botocore==1.12.224
+certifi==2019.6.16
+chardet==3.0.4
+Click==7.0
+docutils==0.15.2
+futures==3.1.1
+idna==2.8
+jmespath==0.9.4
+python-dateutil==2.8.0
+python-decouple==3.1
+requests==2.22.0
+requests-toolbelt==0.9.1
+s3transfer==0.2.1
+six==1.12.0
+urllib3==1.25.3

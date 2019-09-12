@@ -1,0 +1,82 @@
+# These environment variables must be set in CircleCI UI
+#
+# GCLOUD_SERVICE_KEY - key for pushing images to gcr
+# GOOGLE_PROJECT_ID - moz-fx-data-airflow-prod-88e0
+# GOOGLE_COMPUTE_ZONE - us-west1-b
+#
+
+version: 2
+jobs:
+  build:
+    docker:
+      - image: docker:18.02.0-ce
+    working_directory: ~/mozilla/taar_gcp_etl
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run: docker build -t app:build .
+
+  test:
+    docker:
+      - image: python:3.7
+    working_directory: ~/mozilla/taar_gcp_etl
+    steps:
+      - checkout
+      - run: python -m py_compile taar_etl/*.py
+
+  deploy:
+    docker:
+      - image: google/cloud-sdk
+    working_directory: ~/mozilla/taar_gcp_etl
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build container
+          command: |
+            docker build -t app:build .
+      - run:
+          name: Configure gcloud
+          command: |
+            echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
+            gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
+            gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
+      - run:
+          name: Deploy to GCR
+          command: |
+            DOCKER_IMAGE="gcr.io/${GOOGLE_PROJECT_ID}/taar_gcp_etl"
+            # Deploy master
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              docker tag app:build "${DOCKER_IMAGE}:latest"
+              docker push "${DOCKER_IMAGE}:latest"
+            elif  [ ! -z "${CIRCLE_TAG}" ]; then
+            # Deploy a release tag...
+              echo "${DOCKER_IMAGE}:${CIRCLE_TAG}"
+              docker tag app:build "${DOCKER_IMAGE}:${CIRCLE_TAG}"
+              docker images
+              docker push "${DOCKER_IMAGE}:${CIRCLE_TAG}"
+            fi
+
+
+workflows:
+  version: 2
+  build-test-deploy:
+    jobs:
+      - build:
+          filters:
+            tags:
+              only: /.*/
+
+      - test:
+          filters:
+            tags:
+              only: /.*/
+
+      - deploy:
+          requires:
+            - test
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              only: master

@@ -21,7 +21,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Running the TAAR job requires setting up AWS S3 credentials as well
 # as a rundate for the job itself.
 
-ENV PYTHONUNBUFFERED=1 \
+ENV PYTHONUNBUFFERED=1
     # AWS_ACCESS_KEY_ID= \
     # AWS_SECRET_ACCESS_KEY= \
     # AWS_DEFAULT_REGION= \

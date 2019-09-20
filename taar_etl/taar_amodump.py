@@ -289,15 +289,11 @@ def main(date, workers, s3_prefix, s3_bucket):
 
     if config("AWS_ACCESS_KEY_ID", "") == "":
         logger.error("Can't find AWS access key ID.")
-        return
+        return 1
 
     if config("AWS_SECRET_ACCESS_KEY", "") == "":
         logger.error("Can't find AWS secret key.")
-        return
-
-    if config("AWS_DEFAULT_REGION", "") == "":
-        logger.error("Can't find AWS default region.")
-        return
+        return 1
 
     amodb = AMODatabase(int(workers))
     addon_map = amodb.fetch_addons()

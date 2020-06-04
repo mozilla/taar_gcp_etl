@@ -1,0 +1,42 @@
+name: taar_gcp_etl
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - pip=20.1
+  - python=3.7.6
+  - numpy=1.18.5
+  - pip:
+    - apache-beam==2.20.0
+    - avro-python3==1.9.2.1
+    - black==19.10b0
+    - click==7.1.2
+    - fastavro==0.21.24
+    - google-api-core==1.17.0
+    - google-apitools==0.5.28
+    - google-auth==1.14.3
+    - google-cloud-bigquery==1.24.0
+    - google-cloud-bigtable==1.0.0
+    - google-cloud-core==1.3.0
+    - google-cloud-datastore==1.7.4
+    - google-cloud-dlp==0.13.0
+    - google-cloud-language==1.3.0
+    - google-cloud-pubsub==1.0.2
+    - google-cloud-spanner==1.16.0
+    - google-cloud-videointelligence==1.13.0
+    - google-cloud-vision==0.42.0
+    - google-resumable-media==0.5.0
+    - googleapis-common-protos==1.51.0
+    - grpc-google-iam-v1==0.12.3
+    - grpcio==1.29.0
+    - grpcio-gcp==0.2.2
+    - mock==2.0.0
+    - python-dateutil==2.8.1
+    - python-decouple==3.3
+    - pytz==2020.1
+    - regex==2020.5.14
+    - requests==2.23.0
+    - toml==0.10.1
+    - typed-ast==1.4.1
+    - typing-extensions==3.7.4.2
+    - urllib3==1.25.9

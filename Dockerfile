@@ -1,7 +1,12 @@
-FROM python:3.7-buster
+FROM continuumio/miniconda3
 ENV PYTHONDONTWRITEBYTECODE 1
 
 MAINTAINER Victor Ng <vng@mozilla.com>
+
+# add a non-privileged user for installing and running
+# the application
+RUN groupadd --gid 10001 app && \
+    useradd --uid 10001 --gid 10001 --home /app --create-home app 
 
 RUN apt-get update && \
     apt-get install -y build-essential vim && \
@@ -15,16 +20,12 @@ COPY requirements.txt /app/requirements.txt
 
 COPY . /app
 
-RUN pip install --upgrade pip
-RUN pip install --no-cache-dir -r requirements.txt
+RUN make setup_conda
 
-# Running the TAAR job requires setting up AWS S3 credentials as well
-# as a rundate for the job itself.
+RUN . /opt/conda/etc/profile.d/conda.sh && \
+    conda activate taar_gcp_etl && \
+    python setup.py install
 
-ENV PYTHONUNBUFFERED=1
-    # AWS_ACCESS_KEY_ID= \
-    # AWS_SECRET_ACCESS_KEY= \
-    # AWS_DEFAULT_REGION= \
-    # PROC_DATE= \
+USER app
 
 ENTRYPOINT ["/usr/local/bin/python"]

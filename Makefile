@@ -1,16 +1,21 @@
 .PHONY: build up tests flake8 ci tests-with-cov
 
+TAG_BASE=gcr.io/${GCP_PROJECT_ID}/taar_gcp_etl
+TAG_REV=$(shell git tag|tail -n 1)
+
 all:
 	docker build -t app:build .
+
+setup_conda:
+	# Install all dependencies and setup repo in dev mode
+	conda env create -f environment.yml
+	python setup.py develop
 
 shell:
 	docker run --rm -it mozilla/taar_amodump:latest /bin/bash
 
-run_taar_amodump:
-	docker run -t --rm -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} -e PROC_DATE=${PROC_DATE} app:build -m taar_etl.taar_amodump --date 20190801
+tag_gcr_io:
+	docker tag app:build ${TAG_BASE}:${TAG_REV}
 
-run_taar_amowhitelist:
-	docker run -t --rm -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} app:build -m taar_etl.taar_amowhitelist
-
-run_taar_update_whitelist:
-	docker run -t --rm -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} app:build -m taar_etl.taar_update_whitelist --date 20190801
+push_gcr_io:
+	docker push ${TAG_BASE}:${TAG_REV}

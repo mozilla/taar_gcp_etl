@@ -3,10 +3,13 @@ botocore==1.12.224
 certifi==2019.6.16
 chardet==3.0.4
 Click==7.0
+dockerflow==2019.10.0
 docutils==0.15.2
 futures==3.1.1
 idna==2.8
 jmespath==0.9.4
+mozilla-srgutil==0.1.10
+mozilla-taar3==0.4.5
 python-dateutil==2.8.0
 python-decouple==3.1
 requests==2.22.0

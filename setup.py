@@ -3,7 +3,7 @@ from setuptools import find_packages, setup
 setup(
     name="taar_gcp_etl",
     use_scm_version=False,
-    version="0.4.5",
+    version="0.2.0",
     setup_requires=["setuptools_scm", "pytest-runner"],
     tests_require=["pytest"],
     include_package_data=True,

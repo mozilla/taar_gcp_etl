@@ -14,10 +14,6 @@ RUN apt-get update && \
 
 WORKDIR /app
 
-# First copy requirements.txt so we can take advantage of docker
-# caching.
-COPY requirements.txt /app/requirements.txt
-
 COPY . /app
 
 RUN make setup_conda

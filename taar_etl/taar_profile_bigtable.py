@@ -318,6 +318,7 @@ def get_dataflow_options(max_num_workers, gcp_project, job_name, gcs_bucket):
     options.view_as(GoogleCloudOptions).job_name = job_name
     options.view_as(GoogleCloudOptions).temp_location = f"gs://{gcs_bucket}/tmp"
     options.view_as(GoogleCloudOptions).region = "us-west1"
+    options.view_as(GoogleCloudOptions).subnetwork = "default"
 
     return options
 

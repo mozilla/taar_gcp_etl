@@ -147,3 +147,37 @@ taar_etl.taar_profile_bigtable
     that the Google Cloud Storage bucket will be cleared at the start of
     the DAG, and cleared again at the end of DAG to prevent unnecessary
     storage.
+
+
+
+Running a job from within a container
+-------------------------------------
+
+Sample command for the impatient:
+
+```
+	docker run \
+		-v ~/.gcp_creds:/app/creds  \     # directory where you service_account json file resides 
+		-v ~/.config:/app/.config \
+		-e GOOGLE_APPLICATION_CREDENTIALS=/app/creds/<YOUR_SERVICE_ACCOUNT_JSON_FILE_HERE.json> \
+		-e GCLOUD_PROJECT=<YOUR_TEST_GCP_PROJECT_HERE> \
+		-it app:build \
+		-m taar_etl.taar_profile_bigtable \
+		--iso-date=<YESTERDAY_ISODATE_NO_DASHES> \
+		--gcp-project=<YOUR_TEST_GCP_PROJECT_HERE> \
+		--avro-gcs-bucket=<YOUR_GCS_BUCKET_FOR_AVRO_HERE> \
+		--bigquery-dataset-id=<BIG_QUERY_DATASET_ID_HERE> \
+		--bigquery-table-id=<BIG_QUERY_TABLE_ID_HERE> \
+		--bigtable-instance-id=<BIG_TABLE_INSTANCE_ID> \
+		--wipe-bigquery-tmp-table
+```
+
+The container defines an entry point which pre-configures the conda
+enviromet and starts up the python interpreter.  You need to pass in
+arguments to run your module as a task.
+
+Note that to test on your local machine - you need to volume mount two
+locations to get your credentials to load, and you will need to mount
+your google authentication tokens by mounting `.config` and you will
+also need to volume mount your GCP service account JSON file.  You
+will also need to specify your GCP_PROJECT.

@@ -311,6 +311,7 @@ def get_dataflow_options(max_num_workers, gcp_project, job_name, gcs_bucket):
     # Note that autoscaling *must* be set to a non-default value or
     # the cluster will never scale up
     options.view_as(WorkerOptions).autoscaling_algorithm = "THROUGHPUT_BASED"
+    options.view_as(WorkerOptions).subnetwork = "regions/us-west1/subnetworks/default"
 
     # Coerece the options to a GoogleCloudOptions type and set up
     # GCP specific options
@@ -318,7 +319,6 @@ def get_dataflow_options(max_num_workers, gcp_project, job_name, gcs_bucket):
     options.view_as(GoogleCloudOptions).job_name = job_name
     options.view_as(GoogleCloudOptions).temp_location = f"gs://{gcs_bucket}/tmp"
     options.view_as(GoogleCloudOptions).region = "us-west1"
-    options.view_as(GoogleCloudOptions).subnetwork = "default"
 
     return options
 

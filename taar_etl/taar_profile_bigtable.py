@@ -67,25 +67,25 @@ class ProfileDataExtraction:
     def insert_sql(self):
         return f"""
         CREATE OR REPLACE TABLE
-        {self.GCP_PROJECT}.{self.BIGQUERY_DATASET_ID}.{self.BIGQUERY_TABLE_ID}
+            `{self.GCP_PROJECT}`.{self.BIGQUERY_DATASET_ID}.{self.BIGQUERY_TABLE_ID}
         as (
-        select
-            client_id,
-            city as geo_city,
-            SAFE_CAST(subsession_hours_sum * 3600 as int64) as subsession_length,
-            locale,
-            os,
-            active_addons,
-            places_bookmarks_count_mean as bookmark_count,
-            scalar_parent_browser_engagement_tab_open_event_count_sum as tab_open_count,
-            scalar_parent_browser_engagement_total_uri_count_sum as total_uri,
-            scalar_parent_browser_engagement_unique_domains_count_mean as unique_tlds
-        from
-            moz-fx-data-shared-prod.telemetry.clients_last_seen
-        where
-            array_length(active_addons) > 0
-            and RAND() < {self.SAMPLE_RATE}
-            and submission_date = '{self.ISODATE_DASH}'
+            select
+                client_id,
+                city as geo_city,
+                SAFE_CAST(subsession_hours_sum * 3600 as int64) as subsession_length,
+                locale,
+                os,
+                active_addons,
+                places_bookmarks_count_mean as bookmark_count,
+                scalar_parent_browser_engagement_tab_open_event_count_sum as tab_open_count,
+                scalar_parent_browser_engagement_total_uri_count_sum as total_uri,
+                scalar_parent_browser_engagement_unique_domains_count_mean as unique_tlds
+            from
+                `moz-fx-data-shared-prod`.telemetry.clients_last_seen
+            where
+                array_length(active_addons) > 0
+                and RAND() < {self.SAMPLE_RATE}
+                and submission_date = '{self.ISODATE_DASH}'
         )
         """
 

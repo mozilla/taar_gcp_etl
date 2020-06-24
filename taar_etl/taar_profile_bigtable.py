@@ -19,6 +19,7 @@ class ProfileDataExtraction:
         bigtable_instance_id,
         bigtable_table_id,
         sample_rate,
+        subnetwork,
     ):
         from datetime import datetime
 
@@ -49,6 +50,8 @@ class ProfileDataExtraction:
         self.BIGTABLE_TABLE_ID = bigtable_table_id
 
         self.SAMPLE_RATE = sample_rate
+
+        self.SUBNETWORK = subnetwork
 
     def run_query(self, sql):
         from google.cloud import bigquery
@@ -94,6 +97,7 @@ class ProfileDataExtraction:
 
     def wipe_bigquery_tmp_table(self):
         from google.cloud import bigquery
+
         client = bigquery.Client()
         table_id = f"""{self.GCP_PROJECT}.{self.BIGQUERY_DATASET_ID}.{self.BIGQUERY_TABLE_ID}"""
         # If the table does not exist, delete_table raises
@@ -162,7 +166,11 @@ class ProfileDataExtraction:
         self.create_table_in_bigtable()
 
         options = get_dataflow_options(
-            max_num_workers, self.GCP_PROJECT, self.job_name, self.GCS_BUCKET
+            max_num_workers,
+            self.GCP_PROJECT,
+            self.job_name,
+            self.GCS_BUCKET,
+            self.SUBNETWORK,
         )
         with beam.Pipeline(options=options) as p:
             p | "Read" >> beam.io.ReadFromAvro(
@@ -290,7 +298,9 @@ def create_bigtable_rows(jdata):
     return direct_row
 
 
-def get_dataflow_options(max_num_workers, gcp_project, job_name, gcs_bucket):
+def get_dataflow_options(
+    max_num_workers, gcp_project, job_name, gcs_bucket, subnetwork
+):
     from apache_beam.options.pipeline_options import (
         GoogleCloudOptions,
         PipelineOptions,
@@ -311,7 +321,7 @@ def get_dataflow_options(max_num_workers, gcp_project, job_name, gcs_bucket):
     # Note that autoscaling *must* be set to a non-default value or
     # the cluster will never scale up
     options.view_as(WorkerOptions).autoscaling_algorithm = "THROUGHPUT_BASED"
-    options.view_as(WorkerOptions).subnetwork = "regions/us-west1/subnetworks/default"
+    options.view_as(WorkerOptions).subnetwork = subnetwork
 
     # Coerece the options to a GoogleCloudOptions type and set up
     # GCP specific options
@@ -365,6 +375,15 @@ def get_dataflow_options(max_num_workers, gcp_project, job_name, gcs_bucket):
     default=0.0001,
 )
 @click.option(
+    "--subnetwork",
+    help="GCE subnetwork for launching workers. Default is up to the "
+    "Dataflow service. Expected format is "
+    "regions/REGION/subnetworks/SUBNETWORK or the fully qualified "
+    "subnetwork name. For more information, see "
+    "https://cloud.google.com/compute/docs/vpc/",
+    default="regions/us-west1/subnetworks/gke-taar-nonprod-v1",
+)
+@click.option(
     "--fill-bq",
     "stage",
     help="Populate a bigquery table to prepare for Avro export on GCS",
@@ -403,6 +422,7 @@ def main(
     bigtable_table_id,
     dataflow_workers,
     sample_rate,
+    subnetwork,
     stage,
 ):
     print(
@@ -418,9 +438,9 @@ Running job with :
     BIGTABLE_INSTANCE_ID    : {bigtable_instance_id}
     BIGTABLE_TABLE_ID       : {bigtable_table_id}
     ISODATE_NODASH          : {iso_date}
+    SUBNETWORK              : {subnetwork}
     STAGE                   : {stage}
 ===
-Starting in 3 seconds...
 """
     )
     extractor = ProfileDataExtraction(
@@ -432,6 +452,7 @@ Starting in 3 seconds...
         bigtable_instance_id,
         bigtable_table_id,
         sample_rate,
+        subnetwork,
     )
 
     if stage == "fill-bq":

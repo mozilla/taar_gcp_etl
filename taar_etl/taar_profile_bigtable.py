@@ -102,7 +102,11 @@ class ProfileDataExtraction:
         table_id = f"""{self.GCP_PROJECT}.{self.BIGQUERY_DATASET_ID}.{self.BIGQUERY_TABLE_ID}"""
         # If the table does not exist, delete_table raises
         # google.api_core.exceptions.NotFound unless not_found_ok is True.
-        client.delete_table(table_id, not_found_ok=True)  # Make an API request.
+        print(f"Deleting {table_id}")
+
+        # Make an API request to delete table as DROP TABLE is not
+        # suported by BigQuery
+        client.delete_table(table_id, not_found_ok=True)
         print("Deleted table '{}'.".format(table_id))
 
     def dump_avro(self):

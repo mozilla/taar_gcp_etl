@@ -24,4 +24,4 @@ RUN . /opt/conda/etc/profile.d/conda.sh && \
 
 USER app
 
-ENTRYPOINT ["/usr/local/bin/python"]
+ENTRYPOINT ["/bin/bash", "/app/bin/run"]

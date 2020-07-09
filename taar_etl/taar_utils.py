@@ -34,7 +34,7 @@ def selfdestructing_path(dirname):
     shutil.rmtree(dirname)
 
 
-def store_json_to_gcs(bucket, prefix, filename, json_data, iso_date_str):
+def store_json_to_gcs(bucket, prefix, filename, json_obj, iso_date_str):
     """Saves the JSON data to a local file and then uploads it to GCS.
 
     Two copies of the file will get uploaded: one with as "<base_filename>.json"
@@ -47,14 +47,14 @@ def store_json_to_gcs(bucket, prefix, filename, json_data, iso_date_str):
     :param json_data: A string with the JSON content to write.
     :param date: A date string in the "YYYYMMDD" format.
     """
-    byte_data = json.dumps(json_data).encode("utf8")
+    byte_data = json.dumps(json_obj).encode("utf8")
     client = storage.Client()
     bucket = client.get_bucket(bucket)
     simple_fname = f"{prefix}/{filename}.json"
     blob = bucket.blob(simple_fname)
     print(f"Wrote out {simple_fname}")
     blob.upload_from_string(byte_data)
-    long_fname = f"{prefix}/{filename}{iso_date_str}.json"
+    long_fname = f"{prefix}/{filename}.{iso_date_str}.json"
     blob = bucket.blob(long_fname)
     print(f"Wrote out {long_fname}")
     blob.upload_from_string(byte_data)

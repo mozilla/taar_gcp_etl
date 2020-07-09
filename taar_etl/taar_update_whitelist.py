@@ -5,7 +5,7 @@
 import click
 import json
 import requests
-from .taar_utils import store_json_to_s3
+from .taar_utils import store_json_to_gcs
 
 
 class LoadError(Exception):
@@ -55,7 +55,11 @@ def check_guid(guid):
 
 
 def parse_json(json_data, allow_short_guidlist, validate_guids=False):
-    guids = {row["addon"]["guid"] for row in json_data["results"] if validate_row(row)}
+    guids = {
+        row["addon"]["guid"]
+        for row in json_data["results"]
+        if validate_row(row)
+    }
 
     if validate_guids:
         for guid in guids:
@@ -70,24 +74,20 @@ def parse_json(json_data, allow_short_guidlist, validate_guids=False):
     return result
 
 
-def load_etl(transformed_data, date, prefix, bucket):
-    store_json_to_s3(
-        json.dumps(transformed_data, indent=2), WHITELIST_FILENAME, date, prefix, bucket
-    )
-
-
 @click.command()
 @click.option("--date", required=True)
 @click.option("--url", default=EDITORIAL_URI)
 @click.option("--only-recommended", default=True)
-@click.option("--bucket", default="telemetry-parquet")
-@click.option("--prefix", default="telemetry-ml/addon_recommender/")
+@click.option("--bucket", default="taar_models")
+@click.option("--prefix", default="addon_recommender")
 @click.option("--validate-guid", default=False)
 @click.option("--allow-shortlist", default=True)
-def main(date, url, only_recommended, bucket, prefix, validate_guid, allow_shortlist):
+def main(
+    date, url, only_recommended, bucket, prefix, validate_guid, allow_shortlist
+):
     data_extract = load_amo_editorial(url, only_recommended)
     jdata = parse_json(data_extract, allow_shortlist, validate_guid)
-    load_etl(jdata, date, prefix, bucket)
+    store_json_to_gcs(bucket, prefix, WHITELIST_FILENAME, jdata, date)
 
 
 if __name__ == "__main__":

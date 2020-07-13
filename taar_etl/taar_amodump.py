@@ -298,14 +298,6 @@ def marshal(value, name, type_def):
 @click.option("--gcs-bucket", default=AMO_DUMP_BUCKET)
 def main(date, workers, gcs_prefix, gcs_bucket):
 
-    if config("AWS_ACCESS_KEY_ID", "") == "":
-        logger.error("Can't find AWS access key ID.")
-        return 1
-
-    if config("AWS_SECRET_ACCESS_KEY", "") == "":
-        logger.error("Can't find AWS secret key.")
-        return 1
-
     amodb = AMODatabase(int(workers))
     addon_map = amodb.fetch_addons()
 

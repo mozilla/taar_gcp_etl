@@ -11,18 +11,16 @@ import logging
 import os.path
 import shutil
 import tempfile
-import boto3
-from botocore.exceptions import ClientError
 from google.cloud import storage
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 AMO_DUMP_BUCKET = "taar_models"
-AMO_DUMP_KEY = "addon_recommender/addons_database.json"
 
-AMO_WHITELIST_KEY = "addon_recommender/whitelist_addons_database.json"
-AMO_CURATED_WHITELIST_KEY = "addon_recommender/only_guids_top_200.json"
+AMO_WHITELIST_PREFIX = "addon_recommender"
+AMO_WHITELIST_FNAME = "whitelist_addons_database.json"
+AMO_CURATED_WHITELIST_FNAME = "only_guids_top_200.json"
 
 
 @contextlib.contextmanager
@@ -85,19 +83,7 @@ def load_amo_external_whitelist():
                           no valid add-ons.
     """
     final_whitelist = []
-    amo_dump = {}
-    try:
-        # Load the most current AMO dump JSON resource.
-        s3 = boto3.client("s3")
-        s3_contents = s3.get_object(
-            Bucket=AMO_DUMP_BUCKET, Key=AMO_WHITELIST_KEY
-        )
-        amo_dump = json.loads(s3_contents["Body"].read().decode("utf-8"))
-    except ClientError:
-        logger.exception(
-            "Failed to download from S3",
-            extra={"bucket": AMO_DUMP_BUCKET, "key": AMO_DUMP_KEY},
-        )
+    amo_dump = read_from_gcs(AMO_WHITELIST_FNAME, AMO_WHITELIST_PREFIX, AMO_DUMP_BUCKET)
 
     # If the load fails, we will have an empty whitelist, this may be problematic.
     for key, value in list(amo_dump.items()):
@@ -108,7 +94,6 @@ def load_amo_external_whitelist():
 
     if len(final_whitelist) == 0:
         raise RuntimeError("Empty AMO whitelist detected")
-
     return final_whitelist
 
 

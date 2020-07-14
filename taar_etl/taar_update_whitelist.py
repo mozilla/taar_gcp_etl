@@ -16,7 +16,7 @@ class ShortWhitelistError(Exception):
     pass
 
 
-WHITELIST_FILENAME = "only_guids_top_200"
+WHITELIST_FILENAME = "only_guids_top_200.json"
 ADDON_META_URI = "https://addons.mozilla.org/api/v3/addons/search/?app=firefox&sort=created&type=extension&guid={}"  # noqa
 EDITORIAL_URI = "https://addons.mozilla.org/api/v4/discovery/editorial/"
 

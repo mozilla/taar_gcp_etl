@@ -65,7 +65,7 @@ def store_json_to_gcs(
     blob.upload_from_string(byte_data)
 
 
-def read_from_gcs(fname, prefix, bucket, compress=False):
+def read_from_gcs(fname, prefix, bucket):
     with io.BytesIO() as tmpfile:
         client = storage.Client()
         bucket = client.get_bucket(bucket)
@@ -74,8 +74,7 @@ def read_from_gcs(fname, prefix, bucket, compress=False):
         blob.download_to_file(tmpfile)
         tmpfile.seek(0)
         payload = tmpfile.read()
-        if compress:
-            payload = bz2.decompress(payload)
+        payload = bz2.decompress(payload)
         return json.loads(payload.decode("utf8"))
 
 

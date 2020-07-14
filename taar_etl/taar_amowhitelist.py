@@ -13,23 +13,18 @@ from abc import abstractmethod
 from dateutil.parser import parse
 import datetime
 
-from .taar_utils import read_from_s3, store_json_to_s3
+from taar_etl.taar_utils import store_json_to_gcs, read_from_gcs
 
-AMO_DUMP_BUCKET = "telemetry-parquet"
-AMO_DUMP_PREFIX = "telemetry-ml/addon_recommender/"
+AMO_DUMP_BUCKET = "taar_models"
+AMO_DUMP_PREFIX = "addon_recommender"
 
 # Input file
-AMO_DUMP_BASE_FILENAME = "extended_addons_database"
-AMO_DUMP_FILENAME = AMO_DUMP_BASE_FILENAME + ".json"
+AMO_DUMP_FILENAME = "extended_addons_database.json"
 
 # Output files
-FILTERED_AMO_BASE_FILENAME = "whitelist_addons_database"
-FEATURED_BASE_FILENAME = "featured_addons_database"
-FEATURED_WHITELIST_BASE_FILENAME = "featured_whitelist_addons"
-
-FILTERED_AMO_FILENAME = FILTERED_AMO_BASE_FILENAME + ".json"
-FEATURED_FILENAME = FEATURED_BASE_FILENAME + ".json"
-FEATURED_WHITELIST_FILENAME = FEATURED_WHITELIST_BASE_FILENAME + ".json"
+FILTERED_AMO_FILENAME = "whitelist_addons_database.json"
+FEATURED_FILENAME = "featured_addons_database.json"
+FEATURED_WHITELIST_FILENAME = "featured_whitelist_addons.json"
 
 MIN_RATING = 3.0
 MIN_AGE = 60
@@ -78,7 +73,9 @@ class WhitelistAccumulator(AbstractAccumulator):
             # Firefox Pioneer is explicitly excluded
             return
 
-        current_version_files = addon_data.get("current_version", {}).get("files", [])
+        current_version_files = addon_data.get("current_version", {}).get(
+            "files", []
+        )
         if len(current_version_files) == 0:
             # Only allow addons that files in the latest version.
             # Yes - that's as weird as it sounds.  Sometimes addons
@@ -94,7 +91,10 @@ class WhitelistAccumulator(AbstractAccumulator):
             tzinfo=None
         )
 
-        if rating >= self._min_rating and create_date <= self._latest_create_date:
+        if (
+            rating >= self._min_rating
+            and create_date <= self._latest_create_date
+        ):
             self._results[guid] = addon_data
 
 
@@ -120,9 +120,9 @@ class AMOTransformer:
     """
 
     def __init__(self, bucket, prefix, fname, min_rating, min_age):
-        self._s3_bucket = bucket
-        self._s3_prefix = prefix
-        self._s3_fname = fname
+        self._gcs_bucket = bucket
+        self._gcs_prefix = prefix
+        self._gcs_fname = fname
         self._min_rating = min_rating
         self._min_age = min_age
 
@@ -135,7 +135,9 @@ class AMOTransformer:
         }
 
     def extract(self):
-        return read_from_s3(self._s3_fname, self._s3_prefix, self._s3_bucket)
+        return read_from_gcs(
+            self._gcs_fname, self._gcs_prefix, self._gcs_bucket
+        )
 
     def transform(self, json_data):
         """
@@ -166,36 +168,39 @@ class AMOTransformer:
     def get_whitelist(self):
         return self._accumulators["whitelist"].get_results()
 
-    def _load_s3_data(self, jdata, fname):
+    def _save_gcs_data(self, jdata, fname):
         date = datetime.date.today().strftime("%Y%m%d")
-        store_json_to_s3(
-            json.dumps(jdata), fname, date, AMO_DUMP_PREFIX, AMO_DUMP_BUCKET
+        logger.info(f"Start writing {date}{fname}")
+        store_json_to_gcs(
+            AMO_DUMP_BUCKET, AMO_DUMP_PREFIX, fname, jdata, date,
+            compress=True
         )
+        logger.info(f"Completed writing {date}{fname}")
 
-    def load_whitelist(self, jdata):
-        self._load_s3_data(jdata, FILTERED_AMO_BASE_FILENAME)
+    def save_whitelist(self, jdata):
+        self._save_gcs_data(jdata, FILTERED_AMO_FILENAME)
 
-    def load_featuredlist(self, jdata):
-        self._load_s3_data(jdata, FEATURED_BASE_FILENAME)
+    def save_featuredlist(self, jdata):
+        self._save_gcs_data(jdata, FEATURED_FILENAME)
 
-    def load_featuredwhitelist(self, jdata):
-        self._load_s3_data(jdata, FEATURED_WHITELIST_BASE_FILENAME)
+    def save_featuredwhitelist(self, jdata):
+        self._save_gcs_data(jdata, FEATURED_WHITELIST_FILENAME)
 
     def load(self):
-        self.load_whitelist(self.get_whitelist())
-        self.load_featuredlist(self.get_featuredlist())
-        self.load_featuredwhitelist(self.get_featuredwhitelist())
+        self.save_whitelist(self.get_whitelist())
+        self.save_featuredlist(self.get_featuredlist())
+        self.save_featuredwhitelist(self.get_featuredwhitelist())
 
 
 @click.command()
-@click.option("--s3-prefix", default=AMO_DUMP_PREFIX)
-@click.option("--s3-bucket", default=AMO_DUMP_BUCKET)
+@click.option("--gcs-prefix", default=AMO_DUMP_PREFIX)
+@click.option("--gcs-bucket", default=AMO_DUMP_BUCKET)
 @click.option("--input_filename", default=AMO_DUMP_FILENAME)
 @click.option("--min_rating", default=MIN_RATING)
 @click.option("--min_age", default=MIN_AGE)
-def main(s3_prefix, s3_bucket, input_filename, min_rating, min_age):
+def main(gcs_prefix, gcs_bucket, input_filename, min_rating, min_age):
     etl = AMOTransformer(
-        s3_bucket, s3_prefix, input_filename, float(min_rating), int(min_age)
+        gcs_bucket, gcs_prefix, input_filename, float(min_rating), int(min_age)
     )
     jdata = etl.extract()
     etl.transform(jdata)

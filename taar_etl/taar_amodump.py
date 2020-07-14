@@ -16,7 +16,7 @@ from requests_toolbelt.threaded import pool
 
 AMO_DUMP_BUCKET = "taar_models"
 AMO_DUMP_PREFIX = "addon_recommender"
-AMO_DUMP_FILENAME = "extended_addons_database"
+AMO_DUMP_FILENAME = "extended_addons_database.json"
 
 DEFAULT_AMO_REQUEST_URI = "https://addons.mozilla.org/api/v3/addons/search/"
 QUERY_PARAMS = "?app=firefox&sort=created&type=extension"
@@ -306,7 +306,7 @@ def main(date, workers, gcs_prefix, gcs_bucket):
             gcs_bucket, gcs_prefix, AMO_DUMP_FILENAME, addon_map, date
         )
         logger.info(
-            f"Completed uploading gs://{gcs_bucket}/{gcs_prefix}/{AMO_DUMP_FILENAME}.json"
+            f"Completed uploading gs://{gcs_bucket}/{gcs_prefix}/{AMO_DUMP_FILENAME}"
         )
     except Exception:
         raise

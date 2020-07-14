@@ -2,14 +2,15 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
+import bz2
 import contextlib
 import hashlib
+import io
 import json
 import logging
 import os.path
 import shutil
 import tempfile
-
 import boto3
 from botocore.exceptions import ClientError
 from google.cloud import storage
@@ -17,15 +18,11 @@ from google.cloud import storage
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-AMO_DUMP_BUCKET = "telemetry-parquet"
-AMO_DUMP_KEY = "telemetry-ml/addon_recommender/addons_database.json"
+AMO_DUMP_BUCKET = "taar_models"
+AMO_DUMP_KEY = "addon_recommender/addons_database.json"
 
-AMO_WHITELIST_KEY = (
-    "telemetry-ml/addon_recommender/whitelist_addons_database.json"
-)
-AMO_CURATED_WHITELIST_KEY = (
-    "telemetry-ml/addon_recommender/only_guids_top_200.json"
-)
+AMO_WHITELIST_KEY = "addon_recommender/whitelist_addons_database.json"
+AMO_CURATED_WHITELIST_KEY = "addon_recommender/only_guids_top_200.json"
 
 
 @contextlib.contextmanager
@@ -34,7 +31,9 @@ def selfdestructing_path(dirname):
     shutil.rmtree(dirname)
 
 
-def store_json_to_gcs(bucket, prefix, filename, json_obj, iso_date_str):
+def store_json_to_gcs(
+    bucket, prefix, filename, json_obj, iso_date_str, compress=True
+):
     """Saves the JSON data to a local file and then uploads it to GCS.
 
     Two copies of the file will get uploaded: one with as "<base_filename>.json"
@@ -48,16 +47,36 @@ def store_json_to_gcs(bucket, prefix, filename, json_obj, iso_date_str):
     :param date: A date string in the "YYYYMMDD" format.
     """
     byte_data = json.dumps(json_obj).encode("utf8")
+
+    byte_data = bz2.compress(byte_data)
+    logger.info(f"Compressed data is {len(byte_data)} bytes")
+
     client = storage.Client()
     bucket = client.get_bucket(bucket)
-    simple_fname = f"{prefix}/{filename}.json"
+    simple_fname = f"{prefix}/{filename}.bz2"
     blob = bucket.blob(simple_fname)
+    blob.chunk_size = 5 * 1024 * 1024  # Set 5 MB blob size
     print(f"Wrote out {simple_fname}")
     blob.upload_from_string(byte_data)
-    long_fname = f"{prefix}/{filename}.{iso_date_str}.json"
+    long_fname = f"{prefix}/{filename}.{iso_date_str}.bz2"
     blob = bucket.blob(long_fname)
+    blob.chunk_size = 5 * 1024 * 1024  # Set 5 MB blob size
     print(f"Wrote out {long_fname}")
     blob.upload_from_string(byte_data)
+
+
+def read_from_gcs(fname, prefix, bucket, compress=False):
+    with io.BytesIO() as tmpfile:
+        client = storage.Client()
+        bucket = client.get_bucket(bucket)
+        simple_fname = f"{prefix}/{fname}.bz2"
+        blob = bucket.blob(simple_fname)
+        blob.download_to_file(tmpfile)
+        tmpfile.seek(0)
+        payload = tmpfile.read()
+        if compress:
+            payload = bz2.decompress(payload)
+        return json.loads(payload.decode("utf8"))
 
 
 def load_amo_external_whitelist():
@@ -98,10 +117,8 @@ def load_amo_curated_whitelist():
     """
     Return the curated whitelist of addon GUIDs
     """
-    whitelist = read_from_s3(
-        "only_guids_top_200.json",
-        "telemetry-ml/addon_recommender/",
-        "telemetry-parquet",
+    whitelist = read_from_gcs(
+        "only_guids_top_200.json", "addon_recommender", "taar_models",
     )
     return list(whitelist)
 

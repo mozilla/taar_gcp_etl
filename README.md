@@ -14,23 +14,15 @@ GKEPodOperators which run containerized code within a Kubernetes Pod,
 as well as giving you the ability to deploy code into a dataproc
 cluster using a git checkout.
 
-S3 locations
-============
 
-Top level bucket: 
-
-    S3_PARQUET_BUCKET=telemetry-parquet
-
-New GCS storage locations:
-==========================
+## New GCS storage locations
 
 Top level bucket: 
 
     GCS_BUCKET=moz-fx-data-derived-datasets-parquet
 
 
-Jobs
-====
+## Jobs
 
 taar_etl.taar_amodump 
 
@@ -39,7 +31,7 @@ taar_etl.taar_amodump
         https://addons.mozilla.org/api/v3/addons/search/
 
     Output file: 
-        Path: s3://telemetry-parquet/telemetry-ml/addon_recommender/extended_addons_database.json
+        Path: gs://taar_models/addon_recommender/extended_addons_database.json
 
 taar_etl.taar_amowhitelist 
 
@@ -49,9 +41,9 @@ taar_etl.taar_amowhitelist
         taar_etl.taar_amodump 
 
     Output file:
-        Path: s3://telemetry-parquet/telemetry-ml/addon_recommender/whitelist_addons_database.json
-        Path: s3://telemetry-parquet/telemetry-ml/addon_recommender/featured_addons_database.json
-        Path: s3://telemetry-parquet/telemetry-ml/addon_recommender/featured_whitelist_addons.json
+        Path: gs://taar_models/addon_recommender/whitelist_addons_database.json
+        Path: gs://taar_models/addon_recommender/featured_addons_database.json
+        Path: gs://taar_models/addon_recommender/featured_whitelist_addons.json
 
 taar_etl.taar_update_whitelist
 
@@ -61,7 +53,7 @@ taar_etl.taar_update_whitelist
         https://addons.mozilla.org/api/v3/addons/search/
 
     Output file:
-        Path: s3://telemetry-parquet/telemetry-ml/addon_recommender/only_guids_top_200.json
+        Path: gs://taar_models/addon_recommender/only_guids_top_200.json
 
 
 taar_etl.taar_profile_bigtable
@@ -85,47 +77,26 @@ taar_etl.taar_profile_bigtable
     options to the job.
 
 
-Task Sensors
-------------
-
-wait_for_main_summary_export
-wait_for_clients_daily_export
-
-PySpark Jobs
-------------
+## PySpark Jobs
 
 taar_similarity
-    Depends On:
-        gcs: gs://moz-fx-data-derived-datasets-parquet/main_summary/v4
-
     Output file: 
-        S3_PARQUET_BUCKET=telemetry-parquet
-        Path: taar/similarity/donors.json
-        Path: taar/similarity/lr_curves.json
+        Path: gs://taar_models/similarity/donors.json
+        Path: gs://taar_models/similarity/lr_curves.json
 
 taar_locale
-    Depends On:
-        gcs: gs://moz-fx-data-derived-datasets-parquet/clients_daily/v6
-        Path: s3://telemetry-parquet/telemetry-ml/addon_recommender/only_guids_top_200.json
-
     Output file: 
-        S3_BUCKET: telemetry-private-analysis-2
-        Path: taar/locale/top10_dict.json
+        Path: gs://taar_models/locale/top10_dict.json
 
 
 taar_lite
     Compute addon coinstallation rates for TAARlite
     
-    Depends On:
-            s3a://telemetry-parquet/clients_daily/v6/submission_date_s3={dateformat}
-
     Output file: 
-        S3_BUCKET: telemetry-parquet
-        Path: taar/lite/guid_coinstallation.json
+        Path: gs://taar_models/taar/lite/guid_coinstallation.json
 
 
-Google Cloud Platform jobs
---------------------------
+## Google Cloud Platform jobs
 
 taar_etl.taar_profile_bigtable
     This job extracts user profile data from `clients_last_seen` to
@@ -149,9 +120,10 @@ taar_etl.taar_profile_bigtable
     storage.
 
 
+## Uploading images to gcr.io
 
-Running a job from within a container
--------------------------------------
+
+## Running a job from within a container
 
 Sample command for the impatient:
 

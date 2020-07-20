@@ -22,6 +22,7 @@ dependencies:
     - google-cloud-dlp==0.13.0
     - google-cloud-language==1.3.0
     - google-cloud-pubsub==1.0.2
+    - google-cloud-storage==1.29.0
     - google-cloud-spanner==1.16.0
     - google-cloud-videointelligence==1.13.0
     - google-cloud-vision==0.42.0

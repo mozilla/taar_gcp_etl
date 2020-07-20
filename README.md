@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/mozilla/taar_gcp_etl.svg?style=svg)](https://circleci.com/gh/mozila/taar_gcp_etl)
+
 TAARlite and TAAR ETL jobs for GCP
 ==================================
 

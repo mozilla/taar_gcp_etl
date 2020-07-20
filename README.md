@@ -122,6 +122,16 @@ taar_etl.taar_profile_bigtable
 
 ## Uploading images to gcr.io
 
+Travis will automatically build a docker image and push the image into
+gcr.io for production using the latest tag.
+
+You can use images from the gcr.io image repository using a path like:
+
+```
+gcr.io/moz-fx-data-airflow-prod-88e0/taar_gcp_etl:<latest_tag>
+```
+
+
 
 ## Running a job from within a container
 

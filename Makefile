@@ -3,7 +3,9 @@
 TAG_BASE=gcr.io/${GCP_PROJECT_ID}/taar_gcp_etl
 TAG_REV=$(shell git tag|tail -n 1)
 
-all:
+all: build
+
+build:
 	docker build -t app:build .
 
 setup_conda:

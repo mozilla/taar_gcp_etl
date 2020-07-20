@@ -9,14 +9,14 @@ from six.moves import urllib, queue
 from six import text_type
 from decouple import config
 
-from taar_etl.taar_utils import store_json_to_s3
+from taar_etl.taar_utils import store_json_to_gcs
 
 import requests
 from requests_toolbelt.threaded import pool
 
-AMO_DUMP_BUCKET = "telemetry-parquet"
-AMO_DUMP_PREFIX = "telemetry-ml/addon_recommender/"
-AMO_DUMP_FILENAME = "extended_addons_database"
+AMO_DUMP_BUCKET = "taar_models"
+AMO_DUMP_PREFIX = "addon_recommender"
+AMO_DUMP_FILENAME = "extended_addons_database.json"
 
 DEFAULT_AMO_REQUEST_URI = "https://addons.mozilla.org/api/v3/addons/search/"
 QUERY_PARAMS = "?app=firefox&sort=created&type=extension"
@@ -104,7 +104,9 @@ class AMODatabase:
 
         urls = []
         for i in range(1, self._page_count + 1):
-            url = "{0}{1}&page={2}".format(DEFAULT_AMO_REQUEST_URI, QUERY_PARAMS, i)
+            url = "{0}{1}&page={2}".format(
+                DEFAULT_AMO_REQUEST_URI, QUERY_PARAMS, i
+            )
             urls.append(url)
         logger.info("Processing AMO urls")
         p = pool.Pool.from_urls(urls, num_processes=self._max_processes)
@@ -114,7 +116,9 @@ class AMODatabase:
 
         # Try failed requests
         exceptions = p.exceptions()
-        p = pool.Pool.from_exceptions(exceptions, num_processes=self._max_processes)
+        p = pool.Pool.from_exceptions(
+            exceptions, num_processes=self._max_processes
+        )
         p.join_all()
         self._handle_responses(p, addon_map)
         return addon_map
@@ -146,7 +150,9 @@ class AMODatabase:
         for chunk in chunker(iterFactory(addon_map), 500):
             for i, url in enumerate(chunk):
                 q.put({"method": "GET", "url": url, "timeout": 2.0})
-            logger.info("Queue setup - processing initial version page requests")
+            logger.info(
+                "Queue setup - processing initial version page requests"
+            )
             logger.info("%d requests to process" % q.qsize())
 
             p = pool.Pool(q, num_processes=self._max_processes)
@@ -165,7 +171,9 @@ class AMODatabase:
 
             # Now fetch the last version of each addon
             logger.info("Processing last page urls: %d" % len(last_page_urls))
-            p = pool.Pool.from_urls(last_page_urls, num_processes=self._max_processes)
+            p = pool.Pool.from_urls(
+                last_page_urls, num_processes=self._max_processes
+            )
             p.join_all()
 
             self._handle_last_version_responses(p, addon_map)
@@ -263,7 +271,10 @@ def marshal(value, name, type_def):
                 # Try marshalling the value
                 obj[attr_name] = marshal(attr_value, attr_name, attr_type_def)
         return obj
-    elif issubclass(type_def, typing.Container) and type_def not in [str, bytes]:
+    elif issubclass(type_def, typing.Container) and type_def not in [
+        str,
+        bytes,
+    ]:
         if issubclass(type_def, typing.List):
             item_type = type_def.__args__[0]
             return [marshal(j, name, item_type) for j in value]
@@ -283,28 +294,19 @@ def marshal(value, name, type_def):
 @click.command()
 @click.option("--date", required=True)
 @click.option("--workers", default=100)
-@click.option("--s3-prefix", default=AMO_DUMP_PREFIX)
-@click.option("--s3-bucket", default=AMO_DUMP_BUCKET)
-def main(date, workers, s3_prefix, s3_bucket):
-
-    if config("AWS_ACCESS_KEY_ID", "") == "":
-        logger.error("Can't find AWS access key ID.")
-        return 1
-
-    if config("AWS_SECRET_ACCESS_KEY", "") == "":
-        logger.error("Can't find AWS secret key.")
-        return 1
+@click.option("--gcs-prefix", default=AMO_DUMP_PREFIX)
+@click.option("--gcs-bucket", default=AMO_DUMP_BUCKET)
+def main(date, workers, gcs_prefix, gcs_bucket):
 
     amodb = AMODatabase(int(workers))
     addon_map = amodb.fetch_addons()
 
     try:
-        store_json_to_s3(
-            json.dumps(addon_map), AMO_DUMP_FILENAME, date, s3_prefix, s3_bucket
+        store_json_to_gcs(
+            gcs_bucket, gcs_prefix, AMO_DUMP_FILENAME, addon_map, date
         )
         logger.info(
-            "Completed uploading s3://%s/%s%s.json"
-            % (s3_bucket, s3_prefix, AMO_DUMP_FILENAME)
+            f"Completed uploading gs://{gcs_bucket}/{gcs_prefix}/{AMO_DUMP_FILENAME}"
         )
     except Exception:
         raise

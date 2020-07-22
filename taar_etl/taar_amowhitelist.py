@@ -15,7 +15,6 @@ import datetime
 
 from taar_etl.taar_utils import store_json_to_gcs, read_from_gcs
 
-AMO_DUMP_BUCKET = "taar_models"
 AMO_DUMP_PREFIX = "addon_recommender"
 
 # Input file
@@ -172,8 +171,7 @@ class AMOTransformer:
         date = datetime.date.today().strftime("%Y%m%d")
         logger.info(f"Start writing {date}{fname}")
         store_json_to_gcs(
-            AMO_DUMP_BUCKET, AMO_DUMP_PREFIX, fname, jdata, date,
-            compress=True
+            self._gcs_bucket, self._gcs_prefix, fname, jdata, date,
         )
         logger.info(f"Completed writing {date}{fname}")
 
@@ -194,7 +192,7 @@ class AMOTransformer:
 
 @click.command()
 @click.option("--gcs-prefix", default=AMO_DUMP_PREFIX)
-@click.option("--gcs-bucket", default=AMO_DUMP_BUCKET)
+@click.option("--gcs-bucket", default='taar_models')
 @click.option("--input_filename", default=AMO_DUMP_FILENAME)
 @click.option("--min_rating", default=MIN_RATING)
 @click.option("--min_age", default=MIN_AGE)

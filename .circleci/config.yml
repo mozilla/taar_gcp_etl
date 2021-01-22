@@ -26,7 +26,7 @@ jobs:
 
   deploy:
     docker:
-      - image: google/cloud-sdk
+      - image: gcr.io/google.com/cloudsdktool/cloud-sdk:323.0.0
     working_directory: ~/mozilla/taar_gcp_etl
     steps:
       - checkout

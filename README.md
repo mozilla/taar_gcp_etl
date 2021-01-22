@@ -19,10 +19,14 @@ cluster using a git checkout.
 
 ## New GCS storage locations
 
-Top level bucket: 
+Prod buckets: 
 
-    GCS_BUCKET=moz-fx-data-derived-datasets-parquet
+    moz-fx-data-taar-pr-prod-e0f7-prod-etl
+    moz-fx-data-taar-pr-prod-e0f7-prod-models
 
+Test bucket:
+
+    taar_models
 
 ## Jobs
 
@@ -47,6 +51,15 @@ taar_etl.taar_amowhitelist
         Path: gs://taar_models/addon_recommender/featured_addons_database.json
         Path: gs://taar_models/addon_recommender/featured_whitelist_addons.json
 
+taar_lite_guid_ranking
+
+    This job loads installation counts by addon from BigQuery telemetry telemetry.addons table
+    and saves it to GCS.
+
+    Output file:
+        Path: gs://taar_models/taar/lite/guid_install_ranking.json
+
+
 taar_etl.taar_update_whitelist
 
     This job extracts the editorial approved addons from AMO
@@ -59,7 +72,6 @@ taar_etl.taar_update_whitelist
 
 
 taar_etl.taar_profile_bigtable
-
 
     This task is responsible for extracting data from BigQuery from
     the telemetry table: `clients_last_seen`
@@ -82,16 +94,19 @@ taar_etl.taar_profile_bigtable
 ## PySpark Jobs
 
 taar_similarity
+
     Output file: 
         Path: gs://taar_models/similarity/donors.json
         Path: gs://taar_models/similarity/lr_curves.json
 
 taar_locale
+
     Output file: 
         Path: gs://taar_models/locale/top10_dict.json
 
 
 taar_lite
+
     Compute addon coinstallation rates for TAARlite
     
     Output file: 
@@ -101,6 +116,7 @@ taar_lite
 ## Google Cloud Platform jobs
 
 taar_etl.taar_profile_bigtable
+
     This job extracts user profile data from `clients_last_seen` to
     build a user profile table in Bigtable. This job is split into 3
     parts:
@@ -124,7 +140,7 @@ taar_etl.taar_profile_bigtable
 
 ## Uploading images to gcr.io
 
-Travis will automatically build a docker image and push the image into
+CircleCI will automatically build a docker image and push the image into
 gcr.io for production using the latest tag.
 
 You can use images from the gcr.io image repository using a path like:

@@ -1,7 +1,7 @@
 FROM continuumio/miniconda3
 ENV PYTHONDONTWRITEBYTECODE 1
 
-MAINTAINER Victor Ng <vng@mozilla.com>
+MAINTAINER Evgeny Pavlov <epavlov@mozilla.com>
 
 # add a non-privileged user for installing and running
 # the application

@@ -7,23 +7,33 @@ dependencies:
   - python=3.7.6
   - numpy=1.18.5
   - pip:
-    - apache-beam==2.20.0
+    - apache-beam==2.28.0
+    - appdirs==1.4.4
+    - attrs==20.3.0
     - avro-python3==1.9.2.1
     - black==19.10b0
+    - cachetools==4.2.1
+    - chardet==3.0.4
     - click==7.1.2
+    - crcmod==1.7
+    - dill==0.3.1.1
+    - docopt==0.6.2
     - fastavro==0.21.24
+    - fasteners==0.16
+    - future==0.18.2
     - google-api-core==1.17.0
-    - google-apitools==0.5.28
-    - google-auth==1.14.3
+    - google-apitools==0.5.31
+    - google-auth==1.28.0
     - google-cloud-bigquery==1.24.0
     - google-cloud-bigtable==1.0.0
+    - google-cloud-build==2.0.0
     - google-cloud-core==1.3.0
     - google-cloud-datastore==1.7.4
     - google-cloud-dlp==0.13.0
     - google-cloud-language==1.3.0
     - google-cloud-pubsub==1.0.2
-    - google-cloud-storage==1.29.0
     - google-cloud-spanner==1.16.0
+    - google-cloud-storage==1.29.0
     - google-cloud-videointelligence==1.13.0
     - google-cloud-vision==0.42.0
     - google-resumable-media==0.5.0
@@ -31,14 +41,35 @@ dependencies:
     - grpc-google-iam-v1==0.12.3
     - grpcio==1.29.0
     - grpcio-gcp==0.2.2
+    - hdfs==2.6.0
+    - httplib2==0.17.4
+    - idna==2.10
+    - libcst==0.3.18
     - mock==2.0.0
+    - mypy-extensions==0.4.3
+    - oauth2client==4.1.3
+    - pathspec==0.8.1
+    - pbr==5.5.1
+    - proto-plus==1.18.1
+    - protobuf==3.15.7
+    - pyarrow==2.0.0
+    - pyasn1==0.4.8
+    - pyasn1-modules==0.2.8
+    - pydot==1.4.2
+    - pymongo==3.11.3
+    - pyparsing==2.4.7
     - python-dateutil==2.8.1
     - python-decouple==3.3
     - pytz==2020.1
+    - pyyaml==5.4.1
     - regex==2020.5.14
-    - requests==2.23.0
+    - requests==2.25.1
+    - requests-toolbelt==0.9.1
+    - rsa==4.0
+    - six==1.15.0
     - toml==0.10.1
     - typed-ast==1.4.1
     - typing-extensions==3.7.4.2
+    - typing-inspect==0.6.0
     - urllib3==1.25.9
-    - requests_toolbelt==0.9.1
+

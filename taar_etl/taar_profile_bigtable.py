@@ -10,16 +10,16 @@ def gcs_avro_uri(gcs_bucket, iso_date):
 # Construct a BigQuery client object.
 class ProfileDataExtraction:
     def __init__(
-        self,
-        date,
-        gcp_project,
-        bigquery_dataset_id,
-        bigquery_table_id,
-        gcs_bucket,
-        bigtable_instance_id,
-        bigtable_table_id,
-        sample_rate,
-        subnetwork,
+            self,
+            date,
+            gcp_project,
+            bigquery_dataset_id,
+            bigquery_table_id,
+            gcs_bucket,
+            bigtable_instance_id,
+            bigtable_table_id,
+            sample_rate,
+            subnetwork,
     ):
         from datetime import datetime
 
@@ -172,7 +172,7 @@ class ProfileDataExtraction:
         options = get_dataflow_options(
             max_num_workers,
             self.GCP_PROJECT,
-            self.job_name,
+            f"""taar-profile-load-{self.ISODATE_NODASH}""",
             self.GCS_BUCKET,
             self.SUBNETWORK,
         )
@@ -189,10 +189,35 @@ class ProfileDataExtraction:
             )
         print("Export to BigTable is complete")
 
-    @property
-    def job_name(self):
-        # This is the job name that is registered into Dataflow
-        return f"""taar-profile-load-{self.ISODATE_NODASH}"""
+    def delete_opt_out(self, days, max_num_workers=1):
+        import apache_beam as beam
+        from apache_beam.io.gcp.bigtableio import WriteToBigTable
+
+        sql = f"""
+        select distinct client_id
+        from `moz-fx-data-shared-prod.telemetry.deletion_request`
+        where date(submission_timestamp) >= DATE_SUB(DATE '{self.ISODATE_DASH}', INTERVAL {days} DAY)
+        """
+
+        options = get_dataflow_options(
+            max_num_workers,
+            self.GCP_PROJECT,
+            f"""taar-profile-delete-{self.ISODATE_NODASH}""",
+            self.GCS_BUCKET,
+            self.SUBNETWORK,
+        )
+
+        with beam.Pipeline(options=options) as p:
+            p | "Read from BigQuery" >> beam.io.ReadFromBigQuery(
+                query=sql,
+                use_standard_sql=True
+            ) | "Collect rows" >> beam.Map(
+                delete_bigtable_rows
+            ) | "Delete in Cloud BigTable" >> WriteToBigTable(
+                project_id=self.GCP_PROJECT,
+                instance_id=self.BIGTABLE_INSTANCE_ID,
+                table_id=self.BIGTABLE_TABLE_ID,
+            )
 
 
 # Cloud Dataflow functions below
@@ -266,11 +291,10 @@ def explode_active_addons(jdata):
 
 def create_bigtable_rows(jdata):
     import datetime
-    import hashlib
     import json
     import zlib
+    import hashlib
     from google.cloud.bigtable import row
-    from google.cloud.bigtable import column_family
 
     column_family_id = "profile"
 
@@ -302,8 +326,18 @@ def create_bigtable_rows(jdata):
     return direct_row
 
 
+def delete_bigtable_rows(element):
+    from google.cloud.bigtable import row
+    import hashlib
+
+    row_key = hashlib.sha256(element['client_id'].encode("utf8")).hexdigest()
+    direct_row = row.DirectRow(row_key=row_key)
+    direct_row.delete()
+    return direct_row
+
+
 def get_dataflow_options(
-    max_num_workers, gcp_project, job_name, gcs_bucket, subnetwork
+        max_num_workers, gcp_project, job_name, gcs_bucket, subnetwork
 ):
     from apache_beam.options.pipeline_options import (
         GoogleCloudOptions,
@@ -325,7 +359,8 @@ def get_dataflow_options(
     # Note that autoscaling *must* be set to a non-default value or
     # the cluster will never scale up
     options.view_as(WorkerOptions).autoscaling_algorithm = "THROUGHPUT_BASED"
-    options.view_as(WorkerOptions).subnetwork = subnetwork
+    if subnetwork:
+        options.view_as(WorkerOptions).subnetwork = subnetwork
 
     # Coerece the options to a GoogleCloudOptions type and set up
     # GCP specific options
@@ -384,8 +419,7 @@ def get_dataflow_options(
     "Dataflow service. Expected format is "
     "regions/REGION/subnetworks/SUBNETWORK or the fully qualified "
     "subnetwork name. For more information, see "
-    "https://cloud.google.com/compute/docs/vpc/",
-    default="regions/us-west1/subnetworks/gke-taar-nonprod-v1",
+    "https://cloud.google.com/compute/docs/vpc/"
 )
 @click.option(
     "--fill-bq",
@@ -416,18 +450,31 @@ def get_dataflow_options(
     flag_value="wipe-bigquery-tmp-table",
     required=True,
 )
+@click.option(
+    "--bigtable-delete-opt-out",
+    "stage",
+    help="Delete data from Bigtable for users sent telemetry deletion requests in the last N days.",
+    flag_value="bigtable-delete-opt-out",
+    required=True,
+)
+@click.option(
+    "--delete-opt-out-days",
+    help="The number of days to analyze telemetry deletion requests for.",
+    default=28,
+)
 def main(
-    iso_date,
-    gcp_project,
-    bigquery_dataset_id,
-    bigquery_table_id,
-    avro_gcs_bucket,
-    bigtable_instance_id,
-    bigtable_table_id,
-    dataflow_workers,
-    sample_rate,
-    subnetwork,
-    stage,
+        iso_date,
+        gcp_project,
+        bigquery_dataset_id,
+        bigquery_table_id,
+        avro_gcs_bucket,
+        bigtable_instance_id,
+        bigtable_table_id,
+        dataflow_workers,
+        sample_rate,
+        subnetwork,
+        stage,
+        delete_opt_out_days
 ):
     print(
         f"""
@@ -444,6 +491,7 @@ Running job with :
     ISODATE_NODASH          : {iso_date}
     SUBNETWORK              : {subnetwork}
     STAGE                   : {stage}
+    DELETE_OPT_OUT_DAYS      : {delete_opt_out_days}
 ===
 """
     )
@@ -475,6 +523,10 @@ Running job with :
         print("Clearing temporary BigQuery table: ")
         extractor.wipe_bigquery_tmp_table()
         print("BigTable clearing completed")
+    elif stage == "bigtable-delete-opt-out":
+        print("Deleting opt-out users from Bigtable")
+        extractor.delete_opt_out(delete_opt_out_days, dataflow_workers)
+        print("BigTable opt-out users deletion completed")
 
 
 if __name__ == "__main__":

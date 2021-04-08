@@ -11,7 +11,7 @@ build:
 setup_conda:
 	# Install all dependencies and setup repo in dev mode
 	conda env create -f environment.yml
-	python setup.py develop
+	#python setup.py develop
 
 shell:
 	docker run --rm -it mozilla/taar_amodump:latest /bin/bash
@@ -21,3 +21,20 @@ tag_gcr_io:
 
 push_gcr_io:
 	docker push ${TAG_BASE}:${TAG_REV}
+
+
+test_delete:
+	docker run \
+		-v ~/.gcp_creds:/app/creds \
+		-e GOOGLE_APPLICATION_CREDENTIALS=/app/creds/$(GCP_CREDS_NAME) \
+		-e GCLOUD_PROJECT=cfr-personalization-experiment \
+		-it app:build \
+		-m taar_etl.taar_profile_bigtable \
+		--iso-date=20210406 \
+		--gcp-project=cfr-personalization-experiment \
+		--bigtable-table-id=test_table \
+		--bigtable-instance-id=taar-profile \
+		--delete-opt-out-days 28 \
+		--dataflow-workers 2 \
+		--avro-gcs-bucket taar_profile_dump \
+		--bigtable-delete-opt-out

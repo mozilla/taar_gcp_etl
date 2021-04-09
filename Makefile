@@ -21,3 +21,20 @@ tag_gcr_io:
 
 push_gcr_io:
 	docker push ${TAG_BASE}:${TAG_REV}
+
+
+test_delete:
+	docker run \
+		-v ~/.gcp_creds:/app/creds \
+		-e GOOGLE_APPLICATION_CREDENTIALS=/app/creds/$(GCP_CREDS_NAME) \
+		-e GCLOUD_PROJECT=cfr-personalization-experiment \
+		-it app:build \
+		-m taar_etl.taar_profile_bigtable \
+		--iso-date=20210406 \
+		--gcp-project=cfr-personalization-experiment \
+		--bigtable-table-id=test_table \
+		--bigtable-instance-id=taar-profile \
+		--delete-opt-out-days 28 \
+		--avro-gcs-bucket taar_profile_dump \
+		--sample-rate=1.0 \
+		--bigtable-delete-opt-out

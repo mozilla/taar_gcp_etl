@@ -118,7 +118,7 @@ taar_lite
 taar_etl.taar_profile_bigtable
 
     This job extracts user profile data from `clients_last_seen` to
-    build a user profile table in Bigtable. This job is split into 3
+    build a user profile table in Bigtable. This job is split into 4
     parts:
 
     1. Filling a BigQuery table with all pertinent data so that we
@@ -132,6 +132,8 @@ taar_etl.taar_profile_bigtable
     3. Import of Avro files from Google Cloud Storage into 
        Cloud BigTable.
 
+    4. Delete users that opt-out from telemetry colleciton. 
+ 
     When this set of tasks is scheduled in Airflow, it is expected
     that the Google Cloud Storage bucket will be cleared at the start of
     the DAG, and cleared again at the end of DAG to prevent unnecessary

@@ -133,8 +133,7 @@ taar_etl.taar_profile_bigtable
        Cloud BigTable.
 
     4. Delete users that opt-out from telemetry colleciton. 
-       This should be launched separately to be in sync with the main telemetry cleaning job (Shredder).
-
+ 
     When this set of tasks is scheduled in Airflow, it is expected
     that the Google Cloud Storage bucket will be cleared at the start of
     the DAG, and cleared again at the end of DAG to prevent unnecessary

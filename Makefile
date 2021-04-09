@@ -11,7 +11,7 @@ build:
 setup_conda:
 	# Install all dependencies and setup repo in dev mode
 	conda env create -f environment.yml
-	#python setup.py develop
+	python setup.py develop
 
 shell:
 	docker run --rm -it mozilla/taar_amodump:latest /bin/bash
@@ -35,6 +35,6 @@ test_delete:
 		--bigtable-table-id=test_table \
 		--bigtable-instance-id=taar-profile \
 		--delete-opt-out-days 28 \
-		--dataflow-workers 2 \
 		--avro-gcs-bucket taar_profile_dump \
+		--sample-rate=1.0 \
 		--bigtable-delete-opt-out

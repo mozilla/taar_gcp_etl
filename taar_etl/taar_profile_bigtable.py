@@ -406,7 +406,8 @@ def get_dataflow_options(
     "--dataflow-workers",
     type=int,
     default=20,
-    help="Number of dataflow workers to import Avro into BigTable.",
+    help="Number of dataflow workers to use for stages which use dataflow "
+         "(export to BigTable and profiles deletion).",
 )
 @click.option(
     "--sample-rate",
@@ -453,7 +454,7 @@ def get_dataflow_options(
 @click.option(
     "--bigtable-delete-opt-out",
     "stage",
-    help="Delete data from Bigtable for users sent telemetry deletion requests in the last N days.",
+    help="Delete data from Bigtable for users that sent telemetry deletion requests in the last N days.",
     flag_value="bigtable-delete-opt-out",
     required=True,
 )

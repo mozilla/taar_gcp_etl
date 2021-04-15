@@ -163,7 +163,7 @@ class ProfileDataExtraction:
             table.create(column_families=column_families)
             print(f"Created {column_family_id}")
 
-    def load_bigtable(self, max_num_workers=1):
+    def load_bigtable(self, max_num_workers=1, dataflow_service_account=None):
         import apache_beam as beam
         from apache_beam.io.gcp.bigtableio import WriteToBigTable
 
@@ -175,6 +175,7 @@ class ProfileDataExtraction:
             f"""taar-profile-load-{self.ISODATE_NODASH}""",
             self.GCS_BUCKET,
             self.SUBNETWORK,
+            dataflow_service_account
         )
         with beam.Pipeline(options=options) as p:
             p | "Read" >> beam.io.ReadFromAvro(
@@ -189,7 +190,7 @@ class ProfileDataExtraction:
             )
         print("Export to BigTable is complete")
 
-    def delete_opt_out(self, days, max_num_workers=1):
+    def delete_opt_out(self, days, max_num_workers=1, dataflow_service_account=None):
         import apache_beam as beam
         from apache_beam.io.gcp.bigtableio import WriteToBigTable
 
@@ -205,6 +206,7 @@ class ProfileDataExtraction:
             f"""taar-profile-delete-{self.ISODATE_NODASH}""",
             self.GCS_BUCKET,
             self.SUBNETWORK,
+            dataflow_service_account
         )
 
         with beam.Pipeline(options=options) as p:
@@ -337,7 +339,8 @@ def delete_bigtable_rows(element):
 
 
 def get_dataflow_options(
-        max_num_workers, gcp_project, job_name, gcs_bucket, subnetwork
+        max_num_workers, gcp_project, job_name, gcs_bucket, subnetwork,
+        service_account
 ):
     from apache_beam.options.pipeline_options import (
         GoogleCloudOptions,
@@ -368,6 +371,8 @@ def get_dataflow_options(
     options.view_as(GoogleCloudOptions).job_name = job_name
     options.view_as(GoogleCloudOptions).temp_location = f"gs://{gcs_bucket}/tmp"
     options.view_as(GoogleCloudOptions).region = "us-west1"
+    if service_account:
+        options.view_as(GoogleCloudOptions).service_account_email = service_account
 
     return options
 
@@ -408,6 +413,14 @@ def get_dataflow_options(
     default=20,
     help="Number of dataflow workers to use for stages which use dataflow "
          "(export to BigTable and profiles deletion).",
+)
+@click.option(
+    "--dataflow-service-account",
+    help="Specifies a user-managed controller service account, using the format "
+         "my-service-account-name@<project-id>.iam.gserviceaccount.com. "
+         "For more information, see the Controller service account section of the "
+         "Cloud Dataflow security and permissions page. "
+         "If not set, workers use your project's Compute Engine service account as the controller service account."
 )
 @click.option(
     "--sample-rate",
@@ -472,6 +485,7 @@ def main(
         bigtable_instance_id,
         bigtable_table_id,
         dataflow_workers,
+        dataflow_service_account,
         sample_rate,
         subnetwork,
         stage,
@@ -483,6 +497,7 @@ def main(
 Running job with :
     SAMPLE RATE             : {sample_rate}
     DATAFLOW_WORKERS        : {dataflow_workers}
+    DATAFLOW_SERVICE_ACCOUNT: {dataflow_service_account}
     GCP_PROJECT             : {gcp_project}
     GCS_BUCKET              : {avro_gcs_bucket}
     BIGQUERY_DATASET_ID     : {bigquery_dataset_id}
@@ -518,7 +533,7 @@ Running job with :
         print("Avro dump completed")
     elif stage == "gcs-to-bigtable":
         print("BigTable import starting")
-        extractor.load_bigtable(dataflow_workers)
+        extractor.load_bigtable(dataflow_workers, dataflow_service_account)
         print("BigTable import completed")
     elif stage == "wipe-bigquery-tmp-table":
         print("Clearing temporary BigQuery table: ")
@@ -526,7 +541,7 @@ Running job with :
         print("BigTable clearing completed")
     elif stage == "bigtable-delete-opt-out":
         print("Deleting opt-out users from Bigtable")
-        extractor.delete_opt_out(delete_opt_out_days, dataflow_workers)
+        extractor.delete_opt_out(delete_opt_out_days, dataflow_workers, dataflow_service_account)
         print("BigTable opt-out users deletion completed")
 
 

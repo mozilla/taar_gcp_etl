@@ -25,9 +25,8 @@ push_gcr_io:
 
 test_delete:
 	docker run \
-		-v ~/.gcp_creds:/app/creds \
-		-e GOOGLE_APPLICATION_CREDENTIALS=/app/creds/$(GCP_CREDS_NAME) \
-		-e GCLOUD_PROJECT=cfr-personalization-experiment \
+		-v ~/.config:/app/.config \
+		-e GCLOUD_PROJECT=moz-fx-data-taar-nonprod-48b6  \
 		-it app:build \
 		-m taar_etl.taar_profile_bigtable \
 		--iso-date=20210406 \
@@ -35,6 +34,9 @@ test_delete:
 		--bigtable-table-id=test_table \
 		--bigtable-instance-id=taar-profile \
 		--delete-opt-out-days 28 \
-		--avro-gcs-bucket taar_profile_dump \
+		--avro-gcs-bucket moz-fx-data-taar-nonprod-48b6-stage-etl \
+		--subnetwork regions/us-west1/subnetworks/gke-taar-nonprod-v1 \
+		--dataflow-workers=2 \
+		--dataflow-service-account taar-stage-dataflow@moz-fx-data-taar-nonprod-48b6.iam.gserviceaccount.com \
 		--sample-rate=1.0 \
 		--bigtable-delete-opt-out

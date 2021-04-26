@@ -198,6 +198,7 @@ class ProfileDataExtraction:
         select distinct client_id
         from `moz-fx-data-shared-prod.telemetry.deletion_request`
         where date(submission_timestamp) >= DATE_SUB(DATE '{self.ISODATE_DASH}', INTERVAL {days} DAY)
+              and date(submission_timestamp) <= '{self.ISODATE_DASH}'
         """
 
         options = get_dataflow_options(

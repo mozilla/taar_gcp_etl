@@ -34,7 +34,7 @@ taar_etl.taar_amodump
 
     This job extracts the complete AMO listing and emits a JSON blob.
     Depends On:
-        https://addons.mozilla.org/api/v3/addons/search/
+        https://addons.mozilla.org/api/v4/addons/search/
 
     Output file: 
         Path: gs://taar_models/addon_recommender/extended_addons_database.json
@@ -65,7 +65,7 @@ taar_etl.taar_update_whitelist
     This job extracts the editorial approved addons from AMO
 
     Depends On:
-        https://addons.mozilla.org/api/v3/addons/search/
+        https://addons.mozilla.org/api/v4/addons/search/
 
     Output file:
         Path: gs://taar_models/addon_recommender/only_guids_top_200.json

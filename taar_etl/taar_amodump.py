@@ -18,7 +18,7 @@ AMO_DUMP_BUCKET = "taar_models"
 AMO_DUMP_PREFIX = "addon_recommender"
 AMO_DUMP_FILENAME = "extended_addons_database.json"
 
-DEFAULT_AMO_REQUEST_URI = "https://addons.mozilla.org/api/v3/addons/search/"
+DEFAULT_AMO_REQUEST_URI = "https://addons.mozilla.org/api/v4/addons/search/"
 QUERY_PARAMS = "?app=firefox&sort=created&type=extension"
 
 logger = logging.getLogger("amo_database")
@@ -132,7 +132,7 @@ class AMODatabase:
 
         def iterFactory(guid_map):
             for guid in list(guid_map.keys()):
-                yield "https://addons.mozilla.org/api/v3/addons/addon/%s/versions/" % guid
+                yield "https://addons.mozilla.org/api/v4/addons/addon/%s/versions/" % guid
 
         def chunker(seq, size):
             collector = []

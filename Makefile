@@ -23,6 +23,35 @@ push_gcr_io:
 	docker push ${TAG_BASE}:${TAG_REV}
 
 
+test_amodump:
+	docker run \
+		-v ~/.config:/app/.config \
+		-v ~/.gcp_creds:/app/creds \
+		-e GOOGLE_APPLICATION_CREDENTIALS=/app/creds/cfr-personalization-experiment-a068661e8a05.json \
+		-e GCLOUD_PROJECT=cfr-personalization-experiment   \
+		-it app:build \
+		-m taar_etl.taar_amodump \
+		--date=20220620
+
+test_amowhitelist:
+	docker run \
+		-v ~/.config:/app/.config \
+		-v ~/.gcp_creds:/app/creds \
+		-e GOOGLE_APPLICATION_CREDENTIALS=/app/creds/cfr-personalization-experiment-a068661e8a05.json \
+		-e GCLOUD_PROJECT=cfr-personalization-experiment   \
+		-it app:build \
+		-m taar_etl.taar_amowhitelist
+
+test_update_whitelist:
+	docker run \
+		-v ~/.config:/app/.config \
+		-v ~/.gcp_creds:/app/creds \
+		-e GOOGLE_APPLICATION_CREDENTIALS=/app/creds/cfr-personalization-experiment-a068661e8a05.json \
+		-e GCLOUD_PROJECT=cfr-personalization-experiment   \
+		-it app:build \
+		-m taar_etl.taar_update_whitelist \
+		--date=20220620
+
 test_delete:
 	docker run \
 		-v ~/.config:/app/.config \

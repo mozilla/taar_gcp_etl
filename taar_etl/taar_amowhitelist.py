@@ -49,9 +49,9 @@ class FeaturedAccumulator(AbstractAccumulator):
 
     def process_record(self, guid, addon_data):
 
-        featured = addon_data.get("is_featured", False)
+        promoted = addon_data.get("promoted")
 
-        if featured:
+        if promoted and "category" in promoted and promoted["category"] == "recommended":
             self._results[guid] = addon_data
 
 
@@ -102,9 +102,12 @@ class WhitelistFeaturedAccumulator(WhitelistAccumulator):
         WhitelistAccumulator.__init__(self, min_age, min_rating)
 
     def process_record(self, guid, addon_data):
-        if not addon_data.get("is_featured", False):
+        promoted = addon_data.get("promoted")
+
+        if promoted and "category" in promoted and promoted["category"] == "recommended":
+            return WhitelistAccumulator.process_record(self, guid, addon_data)
+        else:
             return
-        return WhitelistAccumulator.process_record(self, guid, addon_data)
 
     def get_results(self):
         return WhitelistAccumulator.get_results(self)

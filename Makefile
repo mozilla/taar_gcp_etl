@@ -23,20 +23,3 @@ push_gcr_io:
 	docker push ${TAG_BASE}:${TAG_REV}
 
 
-test_delete:
-	docker run \
-		-v ~/.config:/app/.config \
-		-e GCLOUD_PROJECT=moz-fx-data-taar-nonprod-48b6  \
-		-it app:build \
-		-m taar_etl.taar_profile_bigtable \
-		--iso-date=20210426 \
-		--gcp-project=moz-fx-data-taar-nonprod-48b6 \
-		--bigtable-table-id=taar_profile \
-		--bigtable-instance-id=taar-stage-202006 \
-		--delete-opt-out-days 28 \
-		--avro-gcs-bucket moz-fx-data-taar-nonprod-48b6-stage-etl \
-		--subnetwork regions/us-west1/subnetworks/gke-taar-nonprod-v1 \
-		--dataflow-workers=2 \
-		--dataflow-service-account taar-stage-dataflow@moz-fx-data-taar-nonprod-48b6.iam.gserviceaccount.com \
-		--sample-rate=1.0 \
-		--bigtable-delete-opt-out

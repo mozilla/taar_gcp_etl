@@ -34,7 +34,7 @@ taar_etl.taar_amodump
 
     This job extracts the complete AMO listing and emits a JSON blob.
     Depends On:
-        https://addons.mozilla.org/api/v3/addons/search/
+        https://addons.mozilla.org/api/v4/addons/search/
 
     Output file: 
         Path: gs://taar_models/addon_recommender/extended_addons_database.json
@@ -65,7 +65,7 @@ taar_etl.taar_update_whitelist
     This job extracts the editorial approved addons from AMO
 
     Depends On:
-        https://addons.mozilla.org/api/v3/addons/search/
+        https://addons.mozilla.org/api/v4/addons/search/
 
     Output file:
         Path: gs://taar_models/addon_recommender/only_guids_top_200.json
@@ -183,3 +183,59 @@ locations to get your credentials to load, and you will need to mount
 your google authentication tokens by mounting `.config` and you will
 also need to volume mount your GCP service account JSON file.  You
 will also need to specify your GCP_PROJECT.
+
+### More examples
+
+**amodump**
+```
+docker run \
+    -v ~/.config:/app/.config \
+    -v ~/.gcp_creds:/app/creds \
+    -e GOOGLE_APPLICATION_CREDENTIALS=/app/creds/<YOUR_SERVICE_ACCOUNT_JSON_FILE_HERE.json> \
+    -e GCLOUD_PROJECT=<YOUR_TEST_GCP_PROJECT_HERE>   \
+    -it app:build \
+    -m taar_etl.taar_amodump \
+    --date=20220620
+```
+**amowhitelist**
+```
+docker run \
+    -v ~/.config:/app/.config \
+    -v ~/.gcp_creds:/app/creds \
+    -e GOOGLE_APPLICATION_CREDENTIALS=/app/creds/<YOUR_SERVICE_ACCOUNT_JSON_FILE_HERE.json> \
+    -e GCLOUD_PROJECT=<YOUR_TEST_GCP_PROJECT_HERE>   \
+    -it app:build \
+    -m taar_etl.taar_amowhitelist
+```
+**update_whitelist**
+```
+docker run \
+    -v ~/.config:/app/.config \
+    -v ~/.gcp_creds:/app/creds \
+    -e GOOGLE_APPLICATION_CREDENTIALS=/app/creds/<YOUR_SERVICE_ACCOUNT_JSON_FILE_HERE.json> \
+    -e GCLOUD_PROJECT=<YOUR_TEST_GCP_PROJECT_HERE>   \
+    -it app:build \
+    -m taar_etl.taar_update_whitelist \
+    --date=20220620
+```
+**profile_bigtable.delete** 
+
+You might need to replace GCP project specific arguments
+```
+docker run \
+    -v ~/.config:/app/.config \
+    -e GCLOUD_PROJECT=moz-fx-data-taar-nonprod-48b6  \
+    -it app:build \
+    -m taar_etl.taar_profile_bigtable \
+    --iso-date=20210426 \
+    --gcp-project=moz-fx-data-taar-nonprod-48b6 \
+    --bigtable-table-id=taar_profile \
+    --bigtable-instance-id=taar-stage-202006 \
+    --delete-opt-out-days 28 \
+    --avro-gcs-bucket moz-fx-data-taar-nonprod-48b6-stage-etl \
+    --subnetwork regions/us-west1/subnetworks/gke-taar-nonprod-v1 \
+    --dataflow-workers=2 \
+    --dataflow-service-account taar-stage-dataflow@moz-fx-data-taar-nonprod-48b6.iam.gserviceaccount.com \
+    --sample-rate=1.0 \
+    --bigtable-delete-opt-out
+```
